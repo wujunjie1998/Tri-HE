@@ -5,7 +5,7 @@
 This repository contains the implementation of the paper:
 
 > Unified Triplet-Level Hallucination Evaluation for Large Vision-Language Models <br>
-> [Junjie Wu](https://wujunjie1998.github.io/)\*, [Tsz Ting Chung](https://www.linkedin.com/in/tsz-ting-chung-5a47aa174/?originalSubdomain=hk)\*, [Kai Chen](https://kaichen1998.github.io)\*, [Dit-Yan Yeung](https://sites.google.com/view/dyyeung) <br>
+> [Junjie Wu](https://wujunjie1998.github.io/)\*, [Tsz Ting Chung](https://ttchungc.github.io/)\*, [Kai Chen](https://kaichen1998.github.io)\*, [Dit-Yan Yeung](https://sites.google.com/view/dyyeung) <br>
 > *Equal Contribution
 
 
