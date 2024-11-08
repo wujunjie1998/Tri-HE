@@ -2,10 +2,22 @@ import json
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-
+import argparse
 from tqdm import tqdm
 
-def runkey(subtree, k, printres=True, modeleval='xxx_triplets', yesc=[], noc=[], printjudge=False, judgen=None, allt=False):
+def read_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--compression_model_path", required=True)
+    parser.add_argument("--dataset", required=True)
+    parser.add_argument("--max_token_len", help='max token length for ICL demos', default=750)
+    parser.add_argument("--compression_rate", default=0.1)
+    parser.add_argument("--target_device", default='cuda')
+    parser.add_argument("--compression_device", default='cpu')
+    args = parser.parse_args()
+    return args
+
+def runkey(subtree, k, printres=True, modeleval=MODEL+'_triplets', yesc=[], noc=[], printjudge=False, judgen=None):
     lsofres1=[]
     triplets = [t.replace('(','').replace(')','').replace(',','')+'.' for t in subtree[k]['triplets']]
     embeddings = model.encode(triplets)
@@ -22,8 +34,6 @@ def runkey(subtree, k, printres=True, modeleval='xxx_triplets', yesc=[], noc=[],
                 evaltriplets = [e if e[-1]=='.' else e+'.' for e in evaltriplets]
                 subtree[k]['instance'][i]['sentences'] = evaltriplets
         else: evaltriplets = subtree[k]['instance'][i][modeleval]
-        if(allt): 
-            objectsent = 'There are '+', '.join(list(set(subtree[k]['object']).union(set(subtree[k]['all_object']))))+'.'
             #objectsent = 'There are '+', '.join(list(set(tree['minigpt4'][k]['object']).union(set(tree['minigpt4'][k]['all_object']))))+'.'
         for tdx,t in enumerate(evaltriplets):
             
@@ -33,31 +43,24 @@ def runkey(subtree, k, printres=True, modeleval='xxx_triplets', yesc=[], noc=[],
             src = model.encode([' '.join(t)])
             res = cosine_similarity(src,embeddings)
             # filter not useful triplets
-            if(allt):
-                filtered = [' '.join([triplets[idx] for idx in np.nonzero(res>=0)[1]])]
-                filtered.append(objectsent)
+            filtered = [' '.join([triplets[idx] for idx in np.nonzero(res>0.5)[1]])]
+            if(filtered==['']): 
+                oriembeddings = model.encode([' '.join(triplets)])
+                topk = (-res).argsort()[0,:3]
+                if(printres): print('filtered',[triplets[tdx] for tdx in topk])
+                oriembeddings = model.encode([' '.join([triplets[tdx] for tdx in topk])])
+                entailval = cosine_similarity(src,oriembeddings)[0][0]
+                #newembeddings = model.encode(filtered)
+                #entailval = cosine_similarity(src,newembeddings)[0][0]
+            else: 
                 if(printres): print('filtered',filtered)
+                oriembeddings = model.encode([' '.join(triplets)])
+                topk = (-res).argsort()[0,:3]
+                oriembeddings = model.encode([' '.join([triplets[tdx] for tdx in topk])])
+                orival = cosine_similarity(src,oriembeddings)[0][0]
                 newembeddings = model.encode(filtered)
                 entailval = cosine_similarity(src,newembeddings)[0][0]
-            else:
-                filtered = [' '.join([triplets[idx] for idx in np.nonzero(res>0.5)[1]])]
-                if(filtered==['']): 
-                    oriembeddings = model.encode([' '.join(triplets)])
-                    topk = (-res).argsort()[0,:3]
-                    if(printres): print('filtered',[triplets[tdx] for tdx in topk])
-                    oriembeddings = model.encode([' '.join([triplets[tdx] for tdx in topk])])
-                    entailval = cosine_similarity(src,oriembeddings)[0][0]
-                    #newembeddings = model.encode(filtered)
-                    #entailval = cosine_similarity(src,newembeddings)[0][0]
-                else: 
-                    if(printres): print('filtered',filtered)
-                    oriembeddings = model.encode([' '.join(triplets)])
-                    topk = (-res).argsort()[0,:3]
-                    oriembeddings = model.encode([' '.join([triplets[tdx] for tdx in topk])])
-                    orival = cosine_similarity(src,oriembeddings)[0][0]
-                    newembeddings = model.encode(filtered)
-                    entailval = cosine_similarity(src,newembeddings)[0][0]
-                    entailval = max(entailval, orival)
+                entailval = max(entailval, orival)
             if(entailval>0.6): 
                 if(printres): print(entailval,'yes')
                 lsofres1[-1].append('yes')
@@ -75,31 +78,31 @@ def runkey(subtree, k, printres=True, modeleval='xxx_triplets', yesc=[], noc=[],
         pbar.set_postfix({'entail': (yes_c+sum(yesc))/(yes_c+sum(yesc)+no_c+sum(noc))})
     return lsofres1
 
-
-model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-
-tree = {
-    'xxx': json.load(open('xxx_with_triplets.json')),
-}
-
-ks = list(tree['xxx'].keys())
-
-treens = list(tree.keys())
-modelevalns = ['xxx_triplets']
-judgens = ['xxx_triplets_judgements']
-
-# NLIeval on triplets
-for x in range(len(treens)):
-    yesc, noc = [], []
-    for k in ks:
-        # print('key:',k)
-        res = runkey(tree[treens[x]], k, printres=False, modeleval=modelevalns[x], yesc=yesc, noc=noc, printjudge=True, judgen=judgens[x])
-        resall = []
-        for l in res:
-            resall+=l
-        yesc.append(len([r for r in resall if r=='yes']))
-        noc.append(len([r for r in resall if r=='no']))
-    sum(yesc)/(sum(yesc)+sum(noc)), sum(yesc),sum(noc), np.mean([y/(y+n) for y,n in zip(yesc, noc) if (y+n)!=0])
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Example script with flags and arguments.")
+    parser.add_argument('--model', help='model for evaluation')
+    args = parser.parse_args()
+    MODEL = args.model
+    
+    model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+    
+    tree = {
+        MODEL: json.load(open(MODEL+'_with_triplets.json')),
+    }
+    
+    ks = list(tree[MODEL].keys())
+    
+    treens = list(tree.keys())
+    modelevalns = [MODEL+'_triplets']
+    judgens = [MODEL+'_triplets_judgements']
+    
+    # NLIeval on triplets
+    for x in range(len(treens)):
+        yesc, noc = [], []
+        for k in ks:
+            # print('key:',k)
+            res = runkey(tree[treens[x]], k, printres=False, modeleval=modelevalns[x], yesc=yesc, noc=noc, printjudge=True, judgen=judgens[x])
+    print('The result of NLI Judgement is updated in the json file.')
 
 ########### topn ablation ###########
 # from nltk.tokenize.treebank import TreebankWordDetokenizer
