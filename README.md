@@ -58,11 +58,41 @@ An example data entry for a single instance is as follows:
 ### Images
 All the 300 images are stored in `data/usage_figures`.
 
-## Example Usage of NLI_judge.py
-For example, with formatted `minigpt4_with_triplets.json`, running the below command store the NLI judgement result into the json file.
+## Run the Experiments
+
+### Obtain LVLM's response.
+The first step of the experiment is to obtain an LVLM's response of all the questions. We suggest you directly store the LVLM's answer as an item after each "question" item in the "tri-he.json" file. This helps you better align your results with the following codes. For example, you can store it with the key `xxx_triplets`, where `xxx` is the name of the evaluated LVLM.
+
+### Extract Triplets from LVLM's response.
+Next, we extract triplets from LVLM's response using GPT-4, which can be done by running the following.
+
 ```
-python NLI_judge.py --model minigpt4
+python extract_triplet.py
 ```
+Note that you need an access to the OpenAI's API with you own openai key, which should be added in line 63 of `bschecker/utils.py`. The extracted triplets will be stored in `'xxx_with_triplets.json` with the `xxx_triplets` key.
+
+### Obtain hallucination judgement.
+
+Finally, we can use both GPT-4 judge and NLI judge to obtain hallucination judgements of the extracted triplets.
+
+To use GPT-4 judge, run
+```
+python gpt4_judge.py
+```
+where openai key is also needed.
+
+To use NLI judge, run
+```
+python NLI_judge.py --model xxx
+```
+
+### Evaluation
+To calculate the Hallu-I and Hallu-Q scores of different types of hallucinations, run
+```
+cd evaluation
+python main_evaluation.py
+```
+
 
 ## Citation
 
