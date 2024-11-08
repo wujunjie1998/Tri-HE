@@ -9,6 +9,56 @@ This repository contains the implementation of the paper:
 > *Equal Contribution
 
 
+## Tri-HE Benchmark Data
+
+The Tri-HE benchmark data contains 300 GQA images, each quipped with several elaborately crafted questions, along with reference triplets and objects, enabling unified assessment of LVLM's hallucination.
+
+- **Data Structure**: Each entry has a unique ID as the key of the image (e.g., `"2374892"`), containing the following main elements:
+  - **`instance`**: A list of question-answer pairs. Each item in this list contains:
+    - `question`: A question that is related to the given image.
+    - `answer`: The ground truth answer of the question.
+    - `triplet`: Triplets that support the ground truth answer. 
+  - **`triplets`**: All triplets that are related to the given image.
+
+  - **`all_object`**: All objects identified in the image.
+
+  - **`object`**: A subset of key objects or entities directly related to the question-answer pairs and triplet relations (e.g., `["laptop", "illuminating room", "pen"]`).
+
+### Example Entry
+
+An example data entry for a single instance is as follows:
+
+```json
+{
+    "2374892": {
+        "instance": [
+            {
+                "question": "Why is the room possibly illuminated?",
+                "answer": "The room is possibly illuminated because there is a lamp turned on that is lighting the area.",
+                "triplet": ["(Lamp, turned on, illuminating room)"],
+            },
+            ...
+        ],
+        "triplets": [
+            "(laptop, is, black)",
+            "(shirt, is, white)",
+            "(Lamp, turned on, illuminating room)",
+            ...
+        ],
+        "all_object": [
+            "laptop", "screen", "hand", "pen", "lamp", "desk", "man", ...
+        ],
+        "object": [
+            "laptop", "illuminating room", "pen", "desk", "man", ...
+        ]
+    }
+}
+```
+
+### Images
+All the 300 images are stored in `data/usage_figures`.
+
+
 
 ## Citation
 
@@ -20,4 +70,3 @@ This repository contains the implementation of the paper:
   year={2024}
 }
 ```
-
