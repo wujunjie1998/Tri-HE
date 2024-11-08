@@ -59,7 +59,7 @@ An example data entry for a single instance is as follows:
 All the 300 images are stored in `data/usage_figures`.
 
 ## Example Usage of NLI_judge.py
-With formatted `minigpt4_with_triplets.json`, running the below command store the NLI judgement result in the json.
+For example, with formatted `minigpt4_with_triplets.json`, running the below command store the NLI judgement result into the json file.
 ```
 python NLI_judge.py --model minigpt4
 ```
