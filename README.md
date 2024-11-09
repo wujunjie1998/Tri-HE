@@ -86,7 +86,7 @@ To use NLI judge, run
 python NLI_judge.py --model xxx
 ```
 
-### Evaluation
+### Evaluation.
 To calculate the Hallu-I and Hallu-Q scores of different types of hallucinations, run
 ```
 cd evaluation
