@@ -92,7 +92,16 @@ To calculate the Hallu-I and Hallu-Q scores of different types of hallucinations
 cd evaluation
 python main_evaluation.py
 ```
+### Obtain mitigation results via self-alignment.
+To obtain a result with `Triplet Description` in the LLaVA-1.5 model, run
+```
+python mitigate_llava15.py
+```
 
+To obtain results with `Triplet Description` in the MiniGPT-4 model, run
+```
+python mitigate_minigpt4.py
+```
 
 ## Citation
 
